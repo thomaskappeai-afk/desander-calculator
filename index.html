@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Desander loss calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: plant-floor tool, plain and exact
+   IDEA: the sample cup next to the desander, with the reading on it
+   PICTURE: a red party cup filling with sand + starch as you slide the level
+   COLOUR and TYPE: cup red, sand tan, starch white on warm grey; Archivo
+   LAYOUT: cup + big loss figures on top, sliders below, assumptions folded */
+:root{color-scheme:light dark;--bg:light-dark(#f4f2ee,#16130f);--card:light-dark(#fff,#221e19);--ink:light-dark(#1b1814,#f1ece4);--mut:light-dark(#6b645a,#a89f92);--red:#d7262e;--sand:#c9a36a;--starch:light-dark(#f3efe6,#efe9dd);--line:light-dark(#ddd6cb,#3a332b)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Archivo,system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(20px,4vw,48px) max(5vw,16px);max-width:1240px;margin:auto}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.05;margin:0 0 6px;font-weight:800;text-wrap:balance}
+.sub{color:var(--mut);margin:0 0 22px}
+.top{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:24px;align-items:stretch}
+.cupbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;align-items:center}
+.cupbox svg{width:100%;max-width:240px;height:auto}
+.vol{font-size:15px;color:var(--mut);text-align:center}.vol b{color:var(--ink);font-size:22px}
+.res{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.k{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.k.big{grid-column:1/-1;background:var(--red);color:#fff;border:0}
+.k .l{font-size:14px;color:var(--mut)}.k.big .l{color:#ffe3e3}
+.k .v{font-size:clamp(26px,3.4vw,36px);font-weight:800;line-height:1.1;white-space:nowrap}
+.k.big .v{font-size:clamp(34px,5.5vw,56px)}
+.k .s{font-size:14px;color:var(--mut)}.k.big .s{color:#ffe3e3}
+.ctr{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:24px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.c label{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.c label span{color:var(--mut);font-weight:400;font-size:14px}
+.row{display:flex;gap:10px;align-items:center;margin-top:6px}
+input[type=range]{flex:1;accent-color:var(--red);height:44px}
+input[type=number]{width:96px;font:inherit;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);text-align:right}
+input:focus-visible,summary:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+details{margin-top:24px}summary{cursor:pointer;font-weight:600;padding:10px 0;min-height:44px}
+table{width:100%;border-collapse:collapse;margin-top:24px;background:var(--card);border-radius:14px;overflow:hidden}
+th,td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}
+th{font-size:14px;color:var(--mut);font-weight:600}
+.note{font-size:14px;color:var(--mut);margin-top:16px}
+.scroll{overflow-x:auto}
+@media(max-width:640px){.top{grid-template-columns:1fr}.cupbox svg{max-width:180px}}
+@media(prefers-reduced-motion:no-preference){#fill,#sandR,#starR{transition:all .15s}}
+</style></head><body>
+<div class="band">
+<h1>Desander sand &amp; starch loss</h1>
+<p class="sub">Slide the readings from the floor. Everything recalculates live.</p>
+<p id="nojs" style="background:var(--red);color:#fff;padding:12px 16px;border-radius:10px;font-weight:600">This preview can't run the calculator. Open the online version: <a style="color:#fff" href="https://thomaskappeai-afk.github.io/desander-calculator/">thomaskappeai-afk.github.io/desander-calculator</a></p>
+
+<div class="top">
+ <div class="cupbox">
+  <svg viewBox="0 0 200 230" aria-label="Sample cup fill level">
+   <defs><clipPath id="cupclip"><path id="inner"/></clipPath></defs>
+   <ellipse cx="100" cy="218" rx="60" ry="7" fill="#000" opacity=".12"/>
+   <g clip-path="url(#cupclip)"><rect id="sandR" x="0" width="200" fill="var(--sand)"/><rect id="starR" x="0" width="200" fill="var(--starch)"/></g>
+   <path id="outer" fill="none" stroke="var(--red)" stroke-width="6" stroke-linejoin="round"/>
+   <line id="lvl" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="4 3"/>
+   <text id="lvlt" font-size="13" fill="var(--ink)" font-weight="600"></text>
+  </svg>
+  <div class="vol">Per discharge<br><b id="vol">–</b></div>
+ </div>
+ <div class="res">
+  <div class="k big"><div class="l">Starch lost per day</div><div class="v" id="costDay">–</div><div class="s" id="pct">–</div></div>
+  <div class="k"><div class="l">Starch lost</div><div class="v" id="starDay">–</div><div class="s" id="starHr">–</div></div>
+  <div class="k"><div class="l">Sand removed</div><div class="v" id="sandDay">–</div><div class="s" id="sandHr">–</div></div>
+ </div>
+</div>
+
+<div class="ctr" id="ctr"></div>
+
+<details><summary>Cup size and discharge make-up (assumptions)</summary><div class="ctr" id="adv" style="margin-top:8px"></div>
+<p class="note">Cup defaults approximate a 16 oz red party cup (bottom Ø 60 mm, top Ø 94 mm, 120 mm tall). Measure yours and adjust. Volume is a truncated cone up to the fill level. Solids = sand + starch; the split between them is set with the main slider.</p></details>
+
+<div class="scroll"><table><thead><tr><th>Period</th><th>Sand (kg)</th><th>Starch (kg)</th><th>Starch value</th></tr></thead><tbody id="tb"></tbody></table></div>
+<p class="note">Default price US$500/t is a rough recent FOB Bangkok level for native tapioca starch; set your own. Loss % = starch in discharge ÷ starch input.</p>
+</div>
+
+<script>
+{
+const F=[
+ ['dis','Discharges per hour','×/h',1,60,1,6],
+ ['lvl','Level in cup','mm',0,120,1,40],
+ ['tph','Starch input','t/h',1,60,0.5,10],
+ ['hrs','Run hours per day','h',1,24,0.5,24],
+ ['price','Starch price','US$/t',200,1000,5,500],
+ ['split','Sand share of solids (rest is starch)','% sand',0,100,1,70]];
+const A=[
+ ['db','Cup bottom diameter','mm',30,120,1,60],
+ ['dt','Cup top diameter','mm',40,160,1,94],
+ ['ch','Cup height','mm',50,200,1,120],
+ ['rho','Discharge density','kg/L',1,2.2,0.05,1.4],
+ ['solids','Solids in discharge (rest is water)','% mass',1,100,1,70]];
+const v={};
+const mk=(a,el)=>{el.innerHTML=a.map(([id,n,u,mi,ma,st,d])=>{v[id]=d;return `<div class="c"><label for="${id}">${n} <span>${u}</span></label><div class="row"><input type="range" id="${id}" min="${mi}" max="${ma}" step="${st}" value="${d}"><input type="number" id="${id}n" min="${mi}" max="${ma}" step="${st}" value="${d}" aria-label="${n}"></div></div>`}).join('')};
+mk(F,document.getElementById('ctr'));mk(A,document.getElementById('adv'));
+document.getElementById('split').closest('.c').insertAdjacentHTML('beforeend','<div class="note" id="splitl" style="margin-top:2px"></div>');
+const $=id=>document.getElementById(id);
+const n0=x=>x.toLocaleString('en-US',{maximumFractionDigits:0});
+const n1=x=>x.toLocaleString('en-US',{maximumFractionDigits:1});
+const kg=x=>x>=1000?n1(x/1000)+' t':n0(x)+' kg';
+const usd=x=>'$'+n0(x);
+function calc(){
+ if(v.lvl>v.ch){v.lvl=v.ch;$('lvl').value=$('lvln').value=v.ch}
+ $('lvl').max=$('lvln').max=v.ch;
+ const rb=v.db/2,rt=v.dt/2,H=v.ch,h=v.lvl,rh=rb+(rt-rb)*h/H;
+ const mL=Math.PI*h/3*(rb*rb+rb*rh+rh*rh)/1000;
+ const mass=mL/1000*v.rho;
+ const sol=mass*v.solids/100,sandD=sol*v.split/100,starD=sol-sandD;
+ const sandH=sandD*v.dis,starH=starD*v.dis;
+ const sandDay=sandH*v.hrs,starDay=starH*v.hrs;
+ const pct=starH/(v.tph*1000)*100;
+ const cost=t=>t/1000*v.price;
+ $('vol').textContent=n0(mL)+' mL · '+n1(mass)+' kg';
+ $('costDay').textContent=usd(cost(starDay));
+ $('pct').textContent=(pct<0.01?pct.toFixed(4):pct.toFixed(3))+' % of starch input · '+usd(cost(starDay)*30)+' / 30 days';
+ $('starDay').textContent=kg(starDay)+'/day';$('starHr').textContent=n1(starH)+' kg/h · '+n0(starD*1000)+' g per discharge';
+ $('sandDay').textContent=kg(sandDay)+'/day';$('sandHr').textContent=n1(sandH)+' kg/h · '+n0(sandD*1000)+' g per discharge';
+ const P=[['Per discharge',1/v.dis/v.hrs],['Per hour',1/v.hrs],['Per day',1],['Per week (7 d)',7],['Per month (30 d)',30],['Per year (365 d)',365]];
+ $('tb').innerHTML=P.map(([l,m])=>`<tr><td>${l}</td><td>${n1(sandDay*m)}</td><td>${n1(starDay*m)}</td><td>${usd(cost(starDay*m))}</td></tr>`).join('');
+ $('splitl').textContent=v.split+'% sand / '+(100-v.split)+'% starch';
+ draw(h/H,v.split/100);
+}
+function draw(f,sf){
+ const sc=1.45,Hp=v.ch*sc,bw=v.db*sc/2,tw=v.dt*sc/2,base=212,top=base-Hp,cx=100;
+ const p=`M${cx-tw},${top} L${cx-bw},${base} Q${cx},${base+6} ${cx+bw},${base} L${cx+tw},${top}`;
+ $('outer').setAttribute('d',p);$('inner').setAttribute('d',p+'Z');
+ const y=base-Hp*f,hp=base+8-y,sh=hp*sf;
+ const s=$('sandR'),t=$('starR');
+ s.setAttribute('y',base+8-sh);s.setAttribute('height',sh);
+ t.setAttribute('y',y);t.setAttribute('height',Math.max(0,hp-sh));
+ const L=$('lvl');L.setAttribute('x1',cx-tw-4);L.setAttribute('x2',cx+tw+4);L.setAttribute('y1',y);L.setAttribute('y2',y);
+ const T=$('lvlt');T.setAttribute('x',4);T.setAttribute('y',Math.max(14,y-5));T.textContent=v.lvl+' mm';
+}
+document.addEventListener('input',e=>{const id=e.target.id.replace(/n$/,'');if(!(id in v))return;const x=parseFloat(e.target.value);if(isNaN(x))return;v[id]=x;$(id).value=x;$(id+'n').value=x;calc()});
+calc();
+document.getElementById('nojs').remove();
+}
+</script>
+</body></html>
