@@ -73,7 +73,7 @@ th{font-size:14px;color:var(--mut);font-weight:600}
 <div class="ctr" id="ctr"></div>
 
 <details><summary>Densities and Baumé scale (assumptions)</summary><div class="ctr" id="adv" style="margin-top:8px"></div>
-<p class="note">Baumé → density of the liquid: SG = modulus ÷ (modulus − °Bé), modulus 145 (US scale for liquids heavier than water). Starch in that liquid: g/L = (SG − 1) × 1000 ÷ (1 − 1 ÷ starch density), because each gram of starch adds (1 − 1/1.55) g to a litre. Read the hydrometer at the temperature it is calibrated for (usually 15–20 °C). Only the starch in the liquid above the sand is counted; starch in the wet sand is ignored, so the true loss can be slightly higher. Sand kg = settled sand volume × sand density.</p></details>
+<p class="note">Baumé → density of the liquid: SG = modulus ÷ (modulus − °Bé), modulus 145 (US scale for liquids heavier than water). Starch in that liquid: g/L = (SG − 1) × 1000 ÷ (1 − 1 ÷ starch density), because each gram of starch adds (1 − 1/starch density) g to a litre. Defaults are worst case: the discharge liquid is taken at the incoming 5 °Bé, no sand takes up volume, and starch density 1.50 (the low end of 1.50–1.55), which gives the most starch per °Bé. Read the hydrometer at the temperature it is calibrated for (usually 15–20 °C). Only the starch in the liquid above the sand is counted; starch in the wet sand is ignored, so the true loss can be slightly higher. Sand kg = settled sand volume × sand density.</p></details>
 
 <button id="reset" type="button">Reset all to defaults</button>
 <div class="scroll"><table><thead><tr><th>Period</th><th>Sand kg</th><th>Starch kg</th><th>Starch $</th></tr></thead><tbody id="tb"></tbody></table></div>
@@ -84,14 +84,14 @@ th{font-size:14px;color:var(--mut);font-weight:600}
 {
 const F=[
  ['dis','Discharges per hour','×/h',1,60,1,6],
- ['vol','Volume of one discharge (all of it)','L',0.1,50,0.1,5],
- ['be','Baumé of the starch milk','°Bé',0,25,0.1,4],
- ['sandp','Settled sand share of the volume','% of volume',0,100,1,10],
+ ['vol','Volume of one discharge (all of it)','L',0.01,10,0.001,0.314],
+ ['be','Baumé of the starch milk','°Bé',0,25,0.1,5],
+ ['sandp','Settled sand share of the volume','% of volume',0,100,1,0],
  ['tph','Starch input','t/h',1,60,0.5,10],
  ['hrs','Run hours per day','h',1,24,0.5,24],
  ['price','Starch price','US$/t',200,1000,5,500]];
 const A=[
- ['rst','Starch granule density','g/mL',1.4,1.7,0.01,1.55],
+ ['rst','Starch granule density','g/mL',1.4,1.7,0.01,1.5],
  ['rs','Settled sand density (dry basis)','kg/L',1,2.2,0.05,1.7],
  ['mod','Baumé modulus','',140,150,0.1,145]];
 const v={};
@@ -100,7 +100,7 @@ mk(F,document.getElementById('ctr'));mk(A,document.getElementById('adv'));
 const $=id=>document.getElementById(id);
 $('sandp').closest('.c').insertAdjacentHTML('beforeend','<div class="note" id="splitl" style="margin-top:2px"></div>');
 const fx=(x,d)=>x.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
-const n1=x=>fx(x,Math.abs(x)>=100?0:Math.abs(x)>=10?1:2);
+const n1=x=>fx(x,Math.abs(x)>=100?0:Math.abs(x)>=10?1:Math.abs(x)>=1?2:3);
 const kg=x=>x>=1000?fx(x/1000,2)+' t':n1(x)+' kg';
 const usd=x=>'$'+fx(x,Math.abs(x)>=100?0:Math.abs(x)>=1?2:3);
 const p3=x=>x===0?'0':x<1e-6?'< 0.000001':x>=100?fx(x,1):Number(x.toPrecision(3)).toString();
