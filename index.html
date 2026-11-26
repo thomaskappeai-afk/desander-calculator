@@ -72,6 +72,7 @@ th{font-size:14px;color:var(--mut);font-weight:600}
 <details><summary>Cup size and dry densities (assumptions)</summary><div class="ctr" id="adv" style="margin-top:8px"></div>
 <p class="note">The cup is treated as a straight cylinder: volume = π × (diameter ÷ 2)² × level. Defaults are Ø 80 mm × 120 mm; measure your cup and adjust. All figures are dry solids (water removed). The densities turn the dry volume into kg: 1 ÷ mix density = sand share ÷ sand density + starch share ÷ starch density. Defaults (sand 1.6, starch 0.65 kg/L) are typical loose dry values; weigh a known volume of your own to set them.</p></details>
 
+<button id="reset" type="button" style="margin-top:20px;min-height:44px;padding:0 18px;font:inherit;font-weight:600;border:2px solid var(--red);color:var(--red);background:transparent;border-radius:10px;cursor:pointer">Reset all to defaults</button>
 <div class="scroll"><table><thead><tr><th>Period</th><th>Sand (kg)</th><th>Starch (kg)</th><th>Starch value</th></tr></thead><tbody id="tb"></tbody></table></div>
 <p class="note">Default price US$500/t is a rough recent FOB Bangkok level for native tapioca starch; set your own. Loss % = starch in discharge ÷ starch input.</p>
 </div>
@@ -133,6 +134,8 @@ function draw(f,sf){
  const T=$('lvlt');T.setAttribute('x',4);T.setAttribute('y',Math.max(14,y-5));T.textContent=v.lvl+' mm';
 }
 document.addEventListener('input',e=>{const id=e.target.id.replace(/n$/,'');if(!(id in v))return;const x=parseFloat(e.target.value);if(isNaN(x))return;v[id]=x;$(id).value=x;$(id+'n').value=x;calc()});
+const D={};[...F,...A].forEach(x=>D[x[0]]=x[6]);
+$('reset').onclick=()=>{for(const k in D){v[k]=D[k];$(k).value=$(k+'n').value=D[k]}calc()};
 calc();
 document.getElementById('nojs').remove();
 }
