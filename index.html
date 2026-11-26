@@ -9,6 +9,7 @@
    COLOUR and TYPE: cup red, sand tan, starch white on warm grey; Archivo
    LAYOUT: cup + big loss figures on top, sliders below, assumptions folded */
 :root{color-scheme:light dark;--bg:light-dark(#f4f2ee,#16130f);--card:light-dark(#fff,#221e19);--ink:light-dark(#1b1814,#f1ece4);--mut:light-dark(#6b645a,#a89f92);--red:#d7262e;--sand:#c9a36a;--starch:light-dark(#f3efe6,#efe9dd);--line:light-dark(#ddd6cb,#3a332b)}
+@supports not (color:light-dark(#000,#fff)){:root{--bg:#f4f2ee;--card:#fff;--ink:#1b1814;--mut:#6b645a;--starch:#f3efe6;--line:#ddd6cb}}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Archivo,system-ui,sans-serif;overflow-x:clip}
@@ -40,8 +41,9 @@ th,td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:right;whi
 th{font-size:14px;color:var(--mut);font-weight:600}
 .note{font-size:14px;color:var(--mut);margin-top:16px}
 .scroll{overflow-x:auto}
-@media(max-width:640px){.top{grid-template-columns:1fr}.cupbox svg{max-width:180px}}
-@media(prefers-reduced-motion:no-preference){#fill,#sandR,#starR{transition:all .15s}}
+@media(max-width:640px){.top{grid-template-columns:1fr}.cupbox svg{max-width:180px}th,td{padding:9px 5px;font-size:13px}td:first-child{white-space:normal}}
+@media(max-width:460px){.res{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:no-preference){#sandR,#starR{transition:all .15s}}
 </style></head><body>
 <div class="band">
 <h1>Desander sand &amp; starch loss</h1>
@@ -55,8 +57,8 @@ th{font-size:14px;color:var(--mut);font-weight:600}
    <ellipse cx="100" cy="218" rx="60" ry="7" fill="#000" opacity=".12"/>
    <g clip-path="url(#cupclip)"><rect id="sandR" x="0" width="200" fill="var(--sand)"/><rect id="starR" x="0" width="200" fill="var(--starch)"/></g>
    <path id="outer" fill="none" stroke="var(--red)" stroke-width="6" stroke-linejoin="round"/>
-   <line id="lvl" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="4 3"/>
-   <text id="lvlt" font-size="13" fill="var(--ink)" font-weight="600"></text>
+   <line id="lvlLine" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="4 3"/>
+   <text id="lvlt" text-anchor="middle" font-size="13" fill="var(--ink)" font-weight="600"></text>
   </svg>
   <div class="vol">Per discharge<br><b id="vol">–</b></div>
  </div>
@@ -73,7 +75,7 @@ th{font-size:14px;color:var(--mut);font-weight:600}
 <p class="note">The cup is treated as a straight cylinder: volume = π × (diameter ÷ 2)² × level. Defaults are Ø 80 mm × 120 mm; measure your cup and adjust. All figures are dry solids (water removed). The sand slider is the share of the level that is sand, as you see the layers in the cup. Each layer's volume × its density gives its kg. Defaults are worst case (packed): sand 1.7, starch 0.8 kg/L. Typical loose values are lower (sand ~1.45, starch ~0.5); weigh a known volume of your own to set them.</p></details>
 
 <button id="reset" type="button" style="margin-top:20px;min-height:44px;padding:0 18px;font:inherit;font-weight:600;border:2px solid var(--red);color:var(--red);background:transparent;border-radius:10px;cursor:pointer">Reset all to defaults</button>
-<div class="scroll"><table><thead><tr><th>Period</th><th>Sand (kg)</th><th>Starch (kg)</th><th>Starch value</th></tr></thead><tbody id="tb"></tbody></table></div>
+<div class="scroll"><table><thead><tr><th>Period</th><th>Sand kg</th><th>Starch kg</th><th>Starch $</th></tr></thead><tbody id="tb"></tbody></table></div>
 <p class="note">Default price US$500/t is a rough recent FOB Bangkok level for native tapioca starch; set your own. Loss % = starch in discharge ÷ starch input.</p>
 </div>
 
@@ -100,24 +102,24 @@ const fx=(x,d)=>x.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractio
 const n0=x=>fx(x,0);
 const n1=x=>fx(x,Math.abs(x)>=100?0:Math.abs(x)>=10?1:2);
 const kg=x=>x>=1000?fx(x/1000,2)+' t':n1(x)+' kg';
-const usd=x=>'$'+fx(x,Math.abs(x)>=100?0:2);
+const usd=x=>'$'+fx(x,Math.abs(x)>=100?0:Math.abs(x)>=1?2:3);
 function calc(){
  if(v.lvl>v.ch){v.lvl=v.ch;$('lvl').value=$('lvln').value=v.ch}
- $('lvl').max=$('lvln').max=v.ch;
+ $('lvl').max=$('lvln').max=v.ch;$('lvl').value=v.lvl;
  const r=v.dia/2,H=v.ch,h=v.lvl;
  const mL=Math.PI*r*r*h/1000;
- const vs=v.split/100,sandD=mL/1000*vs*v.rs,starD=mL/1000*(1-vs)*v.rst,mass=sandD+starD,w=mass?sandD/mass:0;
+ const vs=v.split/100,sandD=mL/1000*vs*v.rs,starD=mL/1000*(1-vs)*v.rst,mass=sandD+starD,wd=vs*v.rs+(1-vs)*v.rst,w=wd?vs*v.rs/wd:0;
  const sandH=sandD*v.dis,starH=starD*v.dis;
  const sandDay=sandH*v.hrs,starDay=starH*v.hrs;
  const pct=starH/(v.tph*1000)*100;
  const cost=t=>t/1000*v.price;
  $('vol').textContent=n1(mL)+' mL · '+fx(mass,3)+' kg';
  $('costDay').textContent=usd(cost(starDay));
- $('pct').textContent=(pct<0.01?pct.toFixed(4):pct.toFixed(3))+' % of starch input · '+usd(cost(starDay)*30)+' / 30 days';
+ $('pct').textContent=(pct===0?'0':pct<1e-6?'< 0.000001':pct>=100?fx(pct,1):Number(pct.toPrecision(3)).toString())+' % of starch input · '+usd(cost(starDay)*30)+' / 30 days';
  $('starDay').textContent=kg(starDay)+'/day';$('starHr').textContent=n1(starH)+' kg/h · '+n1(starD*1000)+' g per discharge';
  $('sandDay').textContent=kg(sandDay)+'/day';$('sandHr').textContent=n1(sandH)+' kg/h · '+n1(sandD*1000)+' g per discharge';
- const P=[['Per discharge',1/v.dis/v.hrs],['Per hour',1/v.hrs],['Per day',1],['Per week (7 d)',7],['Per month (30 d)',30],['Per year (365 d)',365]];
- $('tb').innerHTML=P.map(([l,m])=>`<tr><td>${l}</td><td>${fx(sandDay*m,m<1?3:1)}</td><td>${fx(starDay*m,m<1?3:1)}</td><td>${usd(cost(starDay*m))}</td></tr>`).join('');
+ const P=[['Per discharge',1/v.dis/v.hrs],['Per hour',1/v.hrs],['Per day',1],['Per week',7],['Per month (30 d)',30],['Per year',365]];
+ $('tb').innerHTML=P.map(([l,m])=>`<tr><td>${l}</td><td>${m<1?fx(sandDay*m,3):n1(sandDay*m)}</td><td>${m<1?fx(starDay*m,3):n1(starDay*m)}</td><td>${usd(cost(starDay*m))}</td></tr>`).join('');
  $('splitl').textContent=`In the cup: ${fx(h*vs,1)} mm sand + ${fx(h*(1-vs),1)} mm starch · by weight: ${fx(w*100,0)}% sand / ${fx(100-w*100,0)}% starch`;
  draw(h/H,v.split/100);
 }
@@ -129,10 +131,12 @@ function draw(f,sf){
  const s=$('sandR'),t=$('starR');
  s.setAttribute('y',base-sh);s.setAttribute('height',sh);
  t.setAttribute('y',y);t.setAttribute('height',Math.max(0,hp-sh));
- const L=$('lvl');L.setAttribute('x1',cx-tw-4);L.setAttribute('x2',cx+tw+4);L.setAttribute('y1',y);L.setAttribute('y2',y);
- const T=$('lvlt');T.setAttribute('x',4);T.setAttribute('y',Math.max(14,y-5));T.textContent=v.lvl+' mm';
+ const L=$('lvlLine');L.setAttribute('x1',cx-tw-4);L.setAttribute('x2',cx+tw+4);L.setAttribute('y1',y);L.setAttribute('y2',y);
+ const T=$('lvlt'),up=y-6>top+16;T.setAttribute('x',cx);T.setAttribute('y',up?y-6:y+17);T.setAttribute('fill',up?'var(--ink)':'#1b1814');T.textContent=v.lvl+' mm';
 }
-document.addEventListener('input',e=>{const id=e.target.id.replace(/n$/,'');if(!(id in v))return;const x=parseFloat(e.target.value);if(isNaN(x))return;v[id]=x;$(id).value=x;$(id+'n').value=x;calc()});
+const lim=id=>{const r=$(id);return[parseFloat(r.min),parseFloat(r.max)]};
+document.addEventListener('input',e=>{const el=e.target,id=el.id.replace(/n$/,'');if(!(id in v)||!$(id+'n'))return;let x=parseFloat(el.value);if(isNaN(x))return;const[mi,ma]=lim(id);x=Math.min(ma,Math.max(mi,x));v[id]=x;if(el.type==='range')$(id+'n').value=x;else $(id).value=x;calc()});
+document.addEventListener('change',e=>{const id=e.target.id.replace(/n$/,'');if(id in v&&$(id+'n'))$(id+'n').value=v[id]});
 const D={};[...F,...A].forEach(x=>D[x[0]]=x[6]);
 $('reset').onclick=()=>{for(const k in D){v[k]=D[k];$(k).value=$(k+'n').value=D[k]}calc()};
 calc();
