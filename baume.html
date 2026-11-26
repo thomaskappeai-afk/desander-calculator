@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Desander loss · Baumé</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* VOICE: plant-floor tool, plain and exact
+   IDEA: the bucket you catch a discharge in, sand settled, hydrometer floating in the starch milk
+   PICTURE: bucket with sand layer, milky liquid and a Baumé hydrometer showing the reading
+   COLOUR and TYPE: same family as the cup calculator: red, sand tan, starch-milk white; Archivo
+   LAYOUT: bucket + big loss figures on top, sliders below, assumptions folded */
+:root{color-scheme:light dark;--bg:light-dark(#f4f2ee,#16130f);--card:light-dark(#fff,#221e19);--ink:light-dark(#1b1814,#f1ece4);--mut:light-dark(#6b645a,#a89f92);--red:#d7262e;--sand:#c9a36a;--milk:light-dark(#e9edf0,#cfd6dc);--line:light-dark(#ddd6cb,#3a332b)}
+@supports not (color:light-dark(#000,#fff)){:root{--bg:#f4f2ee;--card:#fff;--ink:#1b1814;--mut:#6b645a;--milk:#e9edf0;--line:#ddd6cb}}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Archivo,system-ui,sans-serif;overflow-x:clip}
+.band{padding:clamp(20px,4vw,48px) max(5vw,16px);max-width:1240px;margin:auto}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.05;margin:0 0 6px;font-weight:800;text-wrap:balance}
+.sub{color:var(--mut);margin:0 0 22px}.sub a{color:var(--red);font-weight:600}
+.top{display:grid;grid-template-columns:minmax(0,300px) minmax(0,1fr);gap:24px;align-items:stretch}
+.cupbox{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;align-items:center}
+.cupbox svg{width:100%;max-width:240px;height:auto}
+.vol{font-size:15px;color:var(--mut);text-align:center}.vol b{color:var(--ink);font-size:20px}
+.res{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.k{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+.k.big{grid-column:1/-1;background:var(--red);color:#fff;border:0}
+.k .l{font-size:14px;color:var(--mut)}.k.big .l{color:#ffe3e3}
+.k .v{font-size:clamp(26px,3.4vw,36px);font-weight:800;line-height:1.1;white-space:nowrap}
+.k.big .v{font-size:clamp(34px,5.5vw,56px)}
+.k .s{font-size:14px;color:var(--mut)}.k.big .s{color:#ffe3e3}
+.ctr{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-top:24px}
+.c{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+.c label{display:flex;justify-content:space-between;gap:8px;font-weight:600}
+.c label span{color:var(--mut);font-weight:400;font-size:14px}
+.row{display:flex;gap:10px;align-items:center;margin-top:6px}
+input[type=range]{flex:1;accent-color:var(--red);height:44px}
+input[type=number]{width:96px;font:inherit;font-size:16px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);text-align:right}
+input:focus-visible,summary:focus-visible,button:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+details{margin-top:24px}summary{cursor:pointer;font-weight:600;padding:10px 0;min-height:44px}
+#reset{margin-top:20px;min-height:44px;padding:0 18px;font:inherit;font-weight:600;border:2px solid var(--red);color:var(--red);background:transparent;border-radius:10px;cursor:pointer}
+table{width:100%;border-collapse:collapse;margin-top:24px;background:var(--card);border-radius:14px;overflow:hidden}
+th,td{padding:10px 14px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}
+th{font-size:14px;color:var(--mut);font-weight:600}
+.note{font-size:14px;color:var(--mut);margin-top:16px}
+.scroll{overflow-x:auto}
+@media(max-width:640px){.top{grid-template-columns:1fr}.cupbox svg{max-width:180px}th,td{padding:9px 5px;font-size:13px}td:first-child{white-space:normal}}
+@media(max-width:460px){.res{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:no-preference){#sandR,#milkR,#hyd{transition:all .15s}}
+</style></head><body>
+<div class="band">
+<h1>Desander starch loss · Baumé method</h1>
+<p class="sub">Catch one discharge, let the sand settle, float the Baumé hydrometer in the starch milk. <a href="https://thomaskappeai-afk.github.io/desander-calculator/">Cup method →</a></p>
+<p id="nojs" style="background:var(--red);color:#fff;padding:12px 16px;border-radius:10px;font-weight:600">This preview can't run the calculator. Open the online version: <a style="color:#fff" href="https://thomaskappeai-afk.github.io/desander-calculator/baume.html">thomaskappeai-afk.github.io/desander-calculator/baume.html</a></p>
+
+<div class="top">
+ <div class="cupbox">
+  <svg viewBox="0 0 200 230" aria-label="Bucket with settled sand, starch milk and hydrometer">
+   <defs><clipPath id="bclip"><path d="M30,40 L42,212 L158,212 L170,40Z"/></clipPath></defs>
+   <ellipse cx="100" cy="218" rx="62" ry="7" fill="#000" opacity=".12"/>
+   <g clip-path="url(#bclip)"><rect id="milkR" x="0" width="200" fill="var(--milk)"/><rect id="sandR" x="0" width="200" fill="var(--sand)"/></g>
+   <path d="M30,40 L42,212 L158,212 L170,40" fill="none" stroke="var(--red)" stroke-width="6" stroke-linejoin="round"/>
+   <g id="hyd"><rect x="122" y="0" width="5" height="70" rx="2" fill="var(--ink)" opacity=".85"/><ellipse cx="124.5" cy="86" rx="9" ry="20" fill="var(--ink)" opacity=".85"/></g>
+   <text id="bet" x="66" y="26" text-anchor="middle" font-size="14" font-weight="800" fill="var(--ink)"></text>
+  </svg>
+  <div class="vol">Starch milk<br><b id="conc">–</b><br><span id="ds"></span></div>
+ </div>
+ <div class="res">
+  <div class="k big"><div class="l">Starch lost per day</div><div class="v" id="costDay">–</div><div class="s" id="pct">–</div></div>
+  <div class="k"><div class="l">Starch lost</div><div class="v" id="starDay">–</div><div class="s" id="starHr">–</div></div>
+  <div class="k"><div class="l">Sand removed</div><div class="v" id="sandDay">–</div><div class="s" id="sandHr">–</div></div>
+ </div>
+</div>
+
+<div class="ctr" id="ctr"></div>
+
+<details><summary>Densities and Baumé scale (assumptions)</summary><div class="ctr" id="adv" style="margin-top:8px"></div>
+<p class="note">Baumé → density of the liquid: SG = modulus ÷ (modulus − °Bé), modulus 145 (US scale for liquids heavier than water). Starch in that liquid: g/L = (SG − 1) × 1000 ÷ (1 − 1 ÷ starch density), because each gram of starch adds (1 − 1/1.55) g to a litre. Read the hydrometer at the temperature it is calibrated for (usually 15–20 °C). Only the starch in the liquid above the sand is counted; starch in the wet sand is ignored, so the true loss can be slightly higher. Sand kg = settled sand volume × sand density.</p></details>
+
+<button id="reset" type="button">Reset all to defaults</button>
+<div class="scroll"><table><thead><tr><th>Period</th><th>Sand kg</th><th>Starch kg</th><th>Starch $</th></tr></thead><tbody id="tb"></tbody></table></div>
+<p class="note">Default price US$500/t is a rough recent FOB Bangkok level for native tapioca starch; set your own. Loss % = starch in discharge ÷ starch input.</p>
+</div>
+
+<script>
+{
+const F=[
+ ['dis','Discharges per hour','×/h',1,60,1,6],
+ ['vol','Volume of one discharge (all of it)','L',0.1,50,0.1,5],
+ ['be','Baumé of the starch milk','°Bé',0,25,0.1,4],
+ ['sandp','Settled sand share of the volume','% of volume',0,100,1,10],
+ ['tph','Starch input','t/h',1,60,0.5,10],
+ ['hrs','Run hours per day','h',1,24,0.5,24],
+ ['price','Starch price','US$/t',200,1000,5,500]];
+const A=[
+ ['rst','Starch granule density','g/mL',1.4,1.7,0.01,1.55],
+ ['rs','Settled sand density (dry basis)','kg/L',1,2.2,0.05,1.7],
+ ['mod','Baumé modulus','',140,150,0.1,145]];
+const v={};
+const mk=(a,el)=>{el.innerHTML=a.map(([id,n,u,mi,ma,st,d])=>{v[id]=d;return `<div class="c"><label for="${id}">${n} <span>${u}</span></label><div class="row"><input type="range" id="${id}" min="${mi}" max="${ma}" step="${st}" value="${d}"><input type="number" id="${id}n" min="${mi}" max="${ma}" step="${st}" value="${d}" aria-label="${n}"></div></div>`}).join('')};
+mk(F,document.getElementById('ctr'));mk(A,document.getElementById('adv'));
+const $=id=>document.getElementById(id);
+$('sandp').closest('.c').insertAdjacentHTML('beforeend','<div class="note" id="splitl" style="margin-top:2px"></div>');
+const fx=(x,d)=>x.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const n1=x=>fx(x,Math.abs(x)>=100?0:Math.abs(x)>=10?1:2);
+const kg=x=>x>=1000?fx(x/1000,2)+' t':n1(x)+' kg';
+const usd=x=>'$'+fx(x,Math.abs(x)>=100?0:Math.abs(x)>=1?2:3);
+const p3=x=>x===0?'0':x<1e-6?'< 0.000001':x>=100?fx(x,1):Number(x.toPrecision(3)).toString();
+function calc(){
+ const sg=v.mod/(v.mod-v.be);
+ const gL=(sg-1)*1000/(1-1/v.rst);
+ const ds=gL/(sg*1000)*100;
+ const liqL=v.vol*(1-v.sandp/100),sandL=v.vol*v.sandp/100;
+ const starD=liqL*gL/1000,sandD=sandL*v.rs;
+ const starH=starD*v.dis,sandH=sandD*v.dis,starDay=starH*v.hrs,sandDay=sandH*v.hrs;
+ const pct=starH/(v.tph*1000)*100,cost=t=>t/1000*v.price;
+ $('conc').textContent=`${n1(gL)} g starch per litre`;$('ds').textContent=`${fx(ds,1)}% dry substance`;
+ $('costDay').textContent=usd(cost(starDay));
+ $('pct').textContent=p3(pct)+' % of starch input · '+usd(cost(starDay)*30)+' / 30 days';
+ $('starDay').textContent=kg(starDay)+'/day';$('starHr').textContent=n1(starH)+' kg/h · '+n1(starD*1000)+' g per discharge';
+ $('sandDay').textContent=kg(sandDay)+'/day';$('sandHr').textContent=n1(sandH)+' kg/h · '+n1(sandD*1000)+' g per discharge';
+ $('splitl').textContent=`Per discharge: ${n1(sandL)} L settled sand + ${n1(liqL)} L starch milk`;
+ const P=[['Per discharge',1/v.dis/v.hrs],['Per hour',1/v.hrs],['Per day',1],['Per week',7],['Per month (30 d)',30],['Per year',365]];
+ $('tb').innerHTML=P.map(([l,m])=>`<tr><td>${l}</td><td>${m<1?fx(sandDay*m,3):n1(sandDay*m)}</td><td>${m<1?fx(starDay*m,3):n1(starDay*m)}</td><td>${usd(cost(starDay*m))}</td></tr>`).join('');
+ draw();
+}
+function draw(){
+ const base=212,top=40,fill=base-(base-top)*0.85,sh=(base-fill)*v.sandp/100;
+ $('milkR').setAttribute('y',fill);$('milkR').setAttribute('height',base-fill);
+ $('sandR').setAttribute('y',base-sh);$('sandR').setAttribute('height',sh);
+ const sink=Math.max(0,Math.min(1,v.be/25));
+ $('hyd').setAttribute('transform',`translate(0,${fill-60+sink*-26})`);
+ $('bet').textContent=fx(v.be,1)+' °Bé';
+}
+const lim=id=>{const r=$(id);return[parseFloat(r.min),parseFloat(r.max)]};
+document.addEventListener('input',e=>{const el=e.target,id=el.id.replace(/n$/,'');if(!(id in v)||!$(id+'n'))return;let x=parseFloat(el.value);if(isNaN(x))return;const[mi,ma]=lim(id);x=Math.min(ma,Math.max(mi,x));v[id]=x;if(el.type==='range')$(id+'n').value=x;else $(id).value=x;calc()});
+document.addEventListener('change',e=>{const id=e.target.id.replace(/n$/,'');if(id in v&&$(id+'n'))$(id+'n').value=v[id]});
+const D={};[...F,...A].forEach(x=>D[x[0]]=x[6]);
+$('reset').onclick=()=>{for(const k in D){v[k]=D[k];$(k).value=$(k+'n').value=D[k]}calc()};
+calc();
+$('nojs').remove();
+}
+</script>
+</body></html>
