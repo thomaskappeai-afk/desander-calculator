@@ -69,8 +69,8 @@ th{font-size:14px;color:var(--mut);font-weight:600}
 
 <div class="ctr" id="ctr"></div>
 
-<details><summary>Cup size and discharge make-up (assumptions)</summary><div class="ctr" id="adv" style="margin-top:8px"></div>
-<p class="note">The cup is treated as a straight cylinder: volume = π × (diameter ÷ 2)² × level. Defaults are Ø 80 mm × 120 mm; measure your cup and adjust. Solids = sand + starch; the split between them is set with the main slider.</p></details>
+<details><summary>Cup size and dry densities (assumptions)</summary><div class="ctr" id="adv" style="margin-top:8px"></div>
+<p class="note">The cup is treated as a straight cylinder: volume = π × (diameter ÷ 2)² × level. Defaults are Ø 80 mm × 120 mm; measure your cup and adjust. All figures are dry solids (water removed). The densities turn the dry volume into kg: 1 ÷ mix density = sand share ÷ sand density + starch share ÷ starch density. Defaults (sand 1.6, starch 0.65 kg/L) are typical loose dry values; weigh a known volume of your own to set them.</p></details>
 
 <div class="scroll"><table><thead><tr><th>Period</th><th>Sand (kg)</th><th>Starch (kg)</th><th>Starch value</th></tr></thead><tbody id="tb"></tbody></table></div>
 <p class="note">Default price US$500/t is a rough recent FOB Bangkok level for native tapioca starch; set your own. Loss % = starch in discharge ÷ starch input.</p>
@@ -80,16 +80,16 @@ th{font-size:14px;color:var(--mut);font-weight:600}
 {
 const F=[
  ['dis','Discharges per hour','×/h',1,60,1,6],
- ['lvl','Level in cup','mm',0,120,1,40],
+ ['lvl','Dry solids level in cup','mm',0,120,0.5,40],
  ['tph','Starch input','t/h',1,60,0.5,10],
  ['hrs','Run hours per day','h',1,24,0.5,24],
  ['price','Starch price','US$/t',200,1000,5,500],
- ['split','Sand share of solids (rest is starch)','% sand',0,100,1,70]];
+ ['split','Sand share of dry solids (rest is starch)','% mass',0,100,1,70]];
 const A=[
- ['dia','Cup inside diameter','mm',30,200,1,80],
- ['ch','Cup height','mm',50,250,1,120],
- ['rho','Discharge density','kg/L',1,2.2,0.05,1.4],
- ['solids','Solids in discharge (rest is water)','% mass',1,100,1,70]];
+ ['dia','Cup inside diameter','mm',5,200,0.5,80],
+ ['ch','Cup height','mm',10,250,1,120],
+ ['rs','Dry sand bulk density','kg/L',0.5,3,0.05,1.6],
+ ['rst','Dry starch bulk density','kg/L',0.2,1.5,0.05,0.65]];
 const v={};
 const mk=(a,el)=>{el.innerHTML=a.map(([id,n,u,mi,ma,st,d])=>{v[id]=d;return `<div class="c"><label for="${id}">${n} <span>${u}</span></label><div class="row"><input type="range" id="${id}" min="${mi}" max="${ma}" step="${st}" value="${d}"><input type="number" id="${id}n" min="${mi}" max="${ma}" step="${st}" value="${d}" aria-label="${n}"></div></div>`}).join('')};
 mk(F,document.getElementById('ctr'));mk(A,document.getElementById('adv'));
@@ -105,17 +105,17 @@ function calc(){
  $('lvl').max=$('lvln').max=v.ch;
  const r=v.dia/2,H=v.ch,h=v.lvl;
  const mL=Math.PI*r*r*h/1000;
- const mass=mL/1000*v.rho;
- const sol=mass*v.solids/100,sandD=sol*v.split/100,starD=sol-sandD;
+ const w=v.split/100,rmix=1/(w/v.rs+(1-w)/v.rst);
+ const mass=mL/1000*rmix,sandD=mass*w,starD=mass-sandD;
  const sandH=sandD*v.dis,starH=starD*v.dis;
  const sandDay=sandH*v.hrs,starDay=starH*v.hrs;
  const pct=starH/(v.tph*1000)*100;
  const cost=t=>t/1000*v.price;
- $('vol').textContent=n0(mL)+' mL · '+fx(mass,3)+' kg';
+ $('vol').textContent=n1(mL)+' mL · '+fx(mass,3)+' kg';
  $('costDay').textContent=usd(cost(starDay));
  $('pct').textContent=(pct<0.01?pct.toFixed(4):pct.toFixed(3))+' % of starch input · '+usd(cost(starDay)*30)+' / 30 days';
- $('starDay').textContent=kg(starDay)+'/day';$('starHr').textContent=n1(starH)+' kg/h · '+n0(starD*1000)+' g per discharge';
- $('sandDay').textContent=kg(sandDay)+'/day';$('sandHr').textContent=n1(sandH)+' kg/h · '+n0(sandD*1000)+' g per discharge';
+ $('starDay').textContent=kg(starDay)+'/day';$('starHr').textContent=n1(starH)+' kg/h · '+n1(starD*1000)+' g per discharge';
+ $('sandDay').textContent=kg(sandDay)+'/day';$('sandHr').textContent=n1(sandH)+' kg/h · '+n1(sandD*1000)+' g per discharge';
  const P=[['Per discharge',1/v.dis/v.hrs],['Per hour',1/v.hrs],['Per day',1],['Per week (7 d)',7],['Per month (30 d)',30],['Per year (365 d)',365]];
  $('tb').innerHTML=P.map(([l,m])=>`<tr><td>${l}</td><td>${fx(sandDay*m,m<1?3:1)}</td><td>${fx(starDay*m,m<1?3:1)}</td><td>${usd(cost(starDay*m))}</td></tr>`).join('');
  $('splitl').textContent=v.split+'% sand / '+(100-v.split)+'% starch';
