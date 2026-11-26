@@ -70,7 +70,7 @@ th{font-size:14px;color:var(--mut);font-weight:600}
 <div class="ctr" id="ctr"></div>
 
 <details><summary>Cup size and discharge make-up (assumptions)</summary><div class="ctr" id="adv" style="margin-top:8px"></div>
-<p class="note">Cup defaults approximate a 16 oz red party cup (bottom Ø 60 mm, top Ø 94 mm, 120 mm tall). Measure yours and adjust. Volume is a truncated cone up to the fill level. Solids = sand + starch; the split between them is set with the main slider.</p></details>
+<p class="note">The cup is treated as a straight cylinder: volume = π × (diameter ÷ 2)² × level. Defaults are Ø 80 mm × 120 mm; measure your cup and adjust. Solids = sand + starch; the split between them is set with the main slider.</p></details>
 
 <div class="scroll"><table><thead><tr><th>Period</th><th>Sand (kg)</th><th>Starch (kg)</th><th>Starch value</th></tr></thead><tbody id="tb"></tbody></table></div>
 <p class="note">Default price US$500/t is a rough recent FOB Bangkok level for native tapioca starch; set your own. Loss % = starch in discharge ÷ starch input.</p>
@@ -86,9 +86,8 @@ const F=[
  ['price','Starch price','US$/t',200,1000,5,500],
  ['split','Sand share of solids (rest is starch)','% sand',0,100,1,70]];
 const A=[
- ['db','Cup bottom diameter','mm',30,120,1,60],
- ['dt','Cup top diameter','mm',40,160,1,94],
- ['ch','Cup height','mm',50,200,1,120],
+ ['dia','Cup inside diameter','mm',30,200,1,80],
+ ['ch','Cup height','mm',50,250,1,120],
  ['rho','Discharge density','kg/L',1,2.2,0.05,1.4],
  ['solids','Solids in discharge (rest is water)','% mass',1,100,1,70]];
 const v={};
@@ -104,8 +103,8 @@ const usd=x=>'$'+fx(x,Math.abs(x)>=100?0:2);
 function calc(){
  if(v.lvl>v.ch){v.lvl=v.ch;$('lvl').value=$('lvln').value=v.ch}
  $('lvl').max=$('lvln').max=v.ch;
- const rb=v.db/2,rt=v.dt/2,H=v.ch,h=v.lvl,rh=rb+(rt-rb)*h/H;
- const mL=Math.PI*h/3*(rb*rb+rb*rh+rh*rh)/1000;
+ const r=v.dia/2,H=v.ch,h=v.lvl;
+ const mL=Math.PI*r*r*h/1000;
  const mass=mL/1000*v.rho;
  const sol=mass*v.solids/100,sandD=sol*v.split/100,starD=sol-sandD;
  const sandH=sandD*v.dis,starH=starD*v.dis;
@@ -123,12 +122,12 @@ function calc(){
  draw(h/H,v.split/100);
 }
 function draw(f,sf){
- const sc=1.45,Hp=v.ch*sc,bw=v.db*sc/2,tw=v.dt*sc/2,base=212,top=base-Hp,cx=100;
- const p=`M${cx-tw},${top} L${cx-bw},${base} Q${cx},${base+6} ${cx+bw},${base} L${cx+tw},${top}`;
+ const sc=Math.min(190/v.ch,150/v.dia),Hp=v.ch*sc,tw=v.dia*sc/2,bw=tw,base=212,top=base-Hp,cx=100;
+ const p=`M${cx-tw},${top} L${cx-bw},${base} L${cx+bw},${base} L${cx+tw},${top}`;
  $('outer').setAttribute('d',p);$('inner').setAttribute('d',p+'Z');
  const y=base-Hp*f,hp=base+8-y,sh=hp*sf;
  const s=$('sandR'),t=$('starR');
- s.setAttribute('y',base+8-sh);s.setAttribute('height',sh);
+ s.setAttribute('y',base-sh+8);s.setAttribute('height',sh);
  t.setAttribute('y',y);t.setAttribute('height',Math.max(0,hp-sh));
  const L=$('lvl');L.setAttribute('x1',cx-tw-4);L.setAttribute('x2',cx+tw+4);L.setAttribute('y1',y);L.setAttribute('y2',y);
  const T=$('lvlt');T.setAttribute('x',4);T.setAttribute('y',Math.max(14,y-5));T.textContent=v.lvl+' mm';
